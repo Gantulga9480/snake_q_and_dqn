@@ -1,6 +1,0 @@
-{
-    "python.pythonPath": "C:\\Users\\user\\anaconda3\\envs\\tf_gpu\\python.exe",
-    "python.linting.pylintEnabled": false,
-    "python.linting.pycodestyleEnabled": true,
-    "python.linting.enabled": true
-}
