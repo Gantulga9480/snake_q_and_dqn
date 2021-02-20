@@ -1,7 +1,6 @@
 import pygame
 import numpy as np
 import math as mt
-from collections import deque
 from utils import *
 
 
@@ -32,25 +31,16 @@ class Snake:
         self.over = False
         self.food_hit = False
 
-        self.board_temp = None
-
     def step(self, action=None):
-        self.board_temp = np.copy(self.board)
-        self.check_snake()
+        # self.check_snake()
         if self.game_flip:
             self.draw_game(self.board)
         self.handle_event()
-        tmp = self.snake[0][2]
-        self.get_action_dir(action)
-        for index, block in enumerate(self.snake):
-            if index == 0:
-                pass
-            else:
-                tmp = block[2]
-                block[2] = ldir
-                self.snake[index] = block
-            ldir = tmp
         for i, block in reversed(list(enumerate(self.snake))):
+            if i == 0:
+                self.get_action_dir(action)
+            else:
+                block[2] = self.snake[i-1][2]
             self.snake[i] = self.draw_snake(block, i)
         self.food_check()
         return self.feedback()
@@ -68,12 +58,11 @@ class Snake:
 
     def reward_func(self):
         dis = self.get_dis()
+        self.dis_diff = dis
         if dis <= self.dis_diff:
-            self.dis_diff = dis
             return FOOD_REWARD - dis
         else:
-            self.dis_diff = dis
-            return -2
+            return - (FOOD_REWARD - dis)
 
     def get_dis(self):
         diff_x = self.food_x - self.snake[0][0]
@@ -195,8 +184,6 @@ class Snake:
     def draw_snake(self, block_s, index):
         x = block_s[0]
         y = block_s[1]
-        if index == len(self.snake) - 1:
-            self.board[x][y] = 0
         if block_s[2] == "↑":
             if index == 0:
                 if x == 0 or self.board[x-1][y] == TAIL:
@@ -237,6 +224,8 @@ class Snake:
             else:
                 self.board[x][y+1] = TAIL
                 block_s[1] += 1
+        if index == len(self.snake) - 1:
+            self.board[x][y] = 0
         return block_s
 
     def draw_game(self, board):
@@ -316,9 +305,9 @@ class Snake:
             print(self.snake[0])
             print(tail)
             print(self.food_x, self.food_y)
-            print(self.board_temp)
             print(self.board)
             quit()
+        self.board[tail[0]][tail[1]] = TAIL
         self.snake.append(tail)
 
     def food_check(self):

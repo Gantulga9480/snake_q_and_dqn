@@ -1,4 +1,3 @@
-import numpy as np
 from snake import Snake, init
 from utils import *
 

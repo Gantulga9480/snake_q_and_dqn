@@ -7,7 +7,7 @@ parser.add_argument('-i', '--index', default='')
 args = parser.parse_args()
 
 
-LR = 0.1
+LR = 0.7
 GAMMA = 0.99
 EPSILON = 1
 EPSILON_MIN = 0.1
@@ -66,6 +66,6 @@ while game.run:
             desc = f'{LR} - avg: ↑ {avg_r} ep: {episode} eps: {EPSILON}'
         else:
             desc = f'{LR} - avg: ↓ {avg_r} ep: {episode} eps: {EPSILON}'
-        game.caption(desc)
         reward_tmp = avg_r
+        game.caption(desc)
 np.save(f'model_{args.index}.npy', q_table)

@@ -3,13 +3,13 @@ import numpy as np
 import random
 from collections import deque
 from tensorflow import keras
-from tensorflow.keras.models import Sequential, save_model, load_model
-from tensorflow.keras.layers import Activation, Dense, Input, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import mixed_precision
 
-BUFFER_SIZE = 5000
-MIN_BUFFER_SIZE = 1000
+BUFFER_SIZE = 10000
+MIN_BUFFER_SIZE = 2000
 BATCH_SIZE = 32
 EPOCH = 1
 DISCOUNT_RATE = 0.99
@@ -17,7 +17,7 @@ LEARNING_RATE = 0.001
 EPSILON = 1
 MIN_EPSILON = 0.1
 EPSILON_DECAY = .99999999
-TARGET_NET_UPDATE_FREQUENCY = 20
+TARGET_NET_UPDATE_FREQUENCY = 30
 
 REPLAY_BUFFER = deque(maxlen=BUFFER_SIZE)
 SAMPLES = list()
@@ -38,10 +38,11 @@ class MyCallback(keras.callbacks.Callback):
 def get_model():
     model = Sequential()
     model.add(Input(shape=(5,), name='input'))
+    model.add(Dense(64, activation='relu'))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(16, activation='relu'))
-    model.add(Dense(8, activation='relu'))
-    model.add(Dense(4, activation=Activation('linear', dtype='float32')))
+    model.add(Dense(4))
+    model.add(Activation('linear', dtype='float32'))
     model.compile(loss="mse", optimizer=Adam(lr=LEARNING_RATE),
                   metrics=["accuracy"])
     model.summary()
@@ -118,10 +119,11 @@ while game.run:
         avg_r = sum(ep_rewards) / show_every
         ep_rewards.clear()
         if avg_r > reward_tmp:
-            print('avg r ↑', avg_r, 'ep:', EPISODE, 'eps:', EPSILON)
+            desc = f'avg: ↑ {avg_r} ep: {EPISODE} eps: {EPSILON}'
         else:
-            print('avg r ↓', avg_r, 'ep:', EPISODE, 'eps:', EPSILON)
+            desc = f'avg: ↓ {avg_r} ep: {EPISODE} eps: {EPSILON}'
         reward_tmp = avg_r
+        game.caption(desc)
     EPISODE += 1
 
 print("Training done congrat!!!")
