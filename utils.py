@@ -1,5 +1,3 @@
-import math
-
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -66,11 +64,11 @@ STATE_SPACE = {'[0, 0, 0, 33]': 0,
 
 # 0: forward, 1: left, 2: right
 ACTION_SPACE = [0, 1, 2, 3]
-FOOD_REWARD = 100
-OUT_REWARD = - FOOD_REWARD * 3
-EMPTY_STEP_REWARD = 15
+FOOD_REWARD = 300
+OUT_REWARD = -5000
+EMPTY_STEP_REWARD = -1
 
-WINDOW_SIZE = 3
+WINDOW_SIZE = 5
 
 
 def pad_with(vector, pad_width, _, kwargs):

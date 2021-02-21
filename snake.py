@@ -30,6 +30,8 @@ class Snake:
         self.out = False
         self.over = False
         self.food_hit = False
+        self.win_state = {}
+        self.win_state_counter = 0
 
     def step(self, action=None):
         # self.check_snake()
@@ -48,21 +50,25 @@ class Snake:
     def feedback(self):
         if self.out:
             self.over = True
-            return self.over, self.four_state(), OUT_REWARD
+            return self.over, self.get_state(), OUT_REWARD
         elif self.food_hit:
             self.food_hit = False
-            self.dis_diff = self.get_dis()
-            return self.over, self.four_state(), self.reward_func()
+            # self.dis_diff = self.get_dis()
+            return self.over, self.get_state(), FOOD_REWARD
         else:
-            return self.over, self.four_state(), self.reward_func()
+            return self.over, self.get_state(), self.reward_func()
+
+    def get_state(self):
+        return self.four_state()
+        return self.get_window()
 
     def reward_func(self):
-        dis = self.get_dis()
-        self.dis_diff = dis
-        if dis <= self.dis_diff:
-            return 1
-        else:
-            return -1
+        # dis = self.get_dis()
+        # self.dis_diff = dis
+        # if dis <= self.dis_diff:
+        #     return EMPTY_STEP_REWARD*5
+        # else:
+        return EMPTY_STEP_REWARD*5
 
     def get_dis(self):
         diff_x = self.food_x - self.snake[0][0]
@@ -71,15 +77,41 @@ class Snake:
         return dis
 
     def get_window(self):
-        head_x = self.snake[0][0]
-        head_y = self.snake[0][1]
-        win_x = head_x - WINDOW_SIZE//2
-        win_y = head_y - WINDOW_SIZE//2
+        state = []
+        x = self.snake[0][0]
+        y = self.snake[0][1]
+        dis_x = self.food_x - x
+        dis_y = self.food_y - y
+        if dis_x < 0 and dis_y < 0:
+            state.append(0)
+        elif dis_x < 0 and dis_y == 0:
+            state.append(1)
+        elif dis_x < 0 and dis_y > 0:
+            state.append(2)
+        elif dis_x == 0 and dis_y > 0:
+            state.append(3)
+        elif dis_x > 0 and dis_y > 0:
+            state.append(4)
+        elif dis_x > 0 and dis_y == 0:
+            state.append(5)
+        elif dis_x > 0 and dis_y < 0:
+            state.append(6)
+        elif dis_x == 0 and dis_y < 0:
+            state.append(7)
+        elif dis_x == 0 and dis_y == 0:
+            quit()
+        win_x = self.snake[0][0]
+        win_y = self.snake[0][1]
         end_x = win_x + WINDOW_SIZE
         end_y = win_y + WINDOW_SIZE
-        board = np.pad(self.board, WINDOW_SIZE//2, pad_with)
+        board = np.pad(self.board, WINDOW_SIZE//2)
         board = board[win_x:end_x, win_y:end_y]
-        return board
+        nodes = str(board.flatten())
+        if nodes not in self.win_state:
+            self.win_state[nodes] = self.win_state_counter
+            self.win_state_counter += 1
+        state.append(self.win_state[nodes])
+        return str(state)
 
     def four_state(self):
         state = []
@@ -127,8 +159,7 @@ class Snake:
         except KeyError:
             print(self.board)
             quit()
-        return np.array(state, dtype=int)
-        # return state
+        return str(state)
 
     def get_action_dir(self, action):
         if action == 0:
@@ -158,7 +189,7 @@ class Snake:
         d = np.random.randint(1, 5)
         if d == 1:
             ldir = "↓"
-            x = np.random.randint(2, BOARD_COUNT - 2)
+            x = np.random.randint(2, BOARD_COUNT - 1)
             x_1 = x - 1
             x_2 = x_1 - 1
             y = np.random.randint(0, BOARD_COUNT - 1)
@@ -166,7 +197,7 @@ class Snake:
             y_2 = y_1
         elif d == 2:
             ldir = "→"
-            y = np.random.randint(2, BOARD_COUNT - 2)
+            y = np.random.randint(2, BOARD_COUNT - 1)
             y_1 = y - 1
             y_2 = y_1 - 1
             x = np.random.randint(0, BOARD_COUNT - 1)
@@ -174,7 +205,7 @@ class Snake:
             x_2 = x_1
         elif d == 3:
             ldir = "↑"
-            x = np.random.randint(1, BOARD_COUNT - 3)
+            x = np.random.randint(0, BOARD_COUNT - 3)
             x_1 = x + 1
             x_2 = x_1 + 1
             y = np.random.randint(0, BOARD_COUNT - 1)
@@ -185,7 +216,7 @@ class Snake:
             x = np.random.randint(0, BOARD_COUNT - 1)
             x_1 = x
             x_2 = x_1
-            y = np.random.randint(1, BOARD_COUNT - 3)
+            y = np.random.randint(0, BOARD_COUNT - 3)
             y_1 = y + 1
             y_2 = y_1 + 1
         self.board[x][y] = HEAD
@@ -195,8 +226,8 @@ class Snake:
         self.snake.append([x_1, y_1, ldir])
         self.snake.append([x_2, y_2, ldir])
         self.create_food()
-        self.dis_diff = self.get_dis()
-        return self.four_state()
+        # self.dis_diff = self.get_dis()
+        return self.get_state()
 
     def draw_snake(self, block_s, index):
         x = block_s[0]
@@ -278,10 +309,29 @@ class Snake:
                     pygame.draw.rect(self.win, GREEN,
                                      (self.vel*j+21, self.vel*i+21,
                                       self.shape, self.shape))
+        self.draw_win()
         pygame.display.flip()
         self.clock.tick(self.fps)
         if not food_drawn:
             print('[WARNING FOOD NOT FOUND]', self.food_hit)
+
+    def draw_win(self):
+        win_x = self.snake[0][0] - WINDOW_SIZE//2
+        win_y = self.snake[0][1] - WINDOW_SIZE//2
+        end_x = win_x + WINDOW_SIZE
+        end_y = win_y + WINDOW_SIZE
+        pygame.draw.line(self.win, WHITE,
+                         (win_y*self.vel+21, win_x*self.vel+21),
+                         (win_y*self.vel+21, end_x*self.vel+21))
+        pygame.draw.line(self.win, WHITE,
+                         (win_y*self.vel+21, win_x*self.vel+21),
+                         (end_y*self.vel+21, win_x*self.vel+21))
+        pygame.draw.line(self.win, WHITE,
+                         (end_y*self.vel+21, win_x*self.vel+21),
+                         (end_y*self.vel+21, end_x*self.vel+21))
+        pygame.draw.line(self.win, WHITE,
+                         (win_y*self.vel+21, end_x*self.vel+21),
+                         (end_y*self.vel+21, end_x*self.vel+21))
 
     def handle_event(self):
         for event in pygame.event.get():
