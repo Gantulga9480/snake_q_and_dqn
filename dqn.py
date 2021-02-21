@@ -1,20 +1,25 @@
-from snake_game import Game
+from snake_game import *
 import numpy as np
 import random
 from collections import deque
 from tensorflow import keras
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Activation, Dense, Input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import mixed_precision
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--index', default='')
+args = parser.parse_args()
 
-BUFFER_SIZE = 10000
-MIN_BUFFER_SIZE = 2000
+
+BUFFER_SIZE = 500000
+MIN_BUFFER_SIZE = 50000
 BATCH_SIZE = 32
 EPOCH = 1
 DISCOUNT_RATE = 0.99
 LEARNING_RATE = 0.001
-EPSILON = 1
+EPSILON = 0.9
 MIN_EPSILON = 0.1
 EPSILON_DECAY = .99999999
 TARGET_NET_UPDATE_FREQUENCY = 30
@@ -81,9 +86,16 @@ mixed_precision.set_global_policy(policy)
 print('Compute dtype: %s' % policy.compute_dtype)
 print('Variable dtype: %s' % policy.variable_dtype)
 
-main_nn = get_model()
-target_nn = get_model()
-target_nn.set_weights(main_nn.get_weights())
+
+try:
+    main_nn = load_model(f"main{args.index}.h5")
+    target_nn = load_model(f"main{args.index}.h5")
+    print('LOADING MODEL')
+except ImportError:
+    main_nn = get_model()
+    target_nn = get_model()
+    target_nn.set_weights(main_nn.get_weights())
+    print('CREATING MODEL')
 callbacks = MyCallback()
 
 game = Game()
@@ -98,10 +110,16 @@ while game.run:
     while not game.over:
         FRAME += 1
         if np.random.random() < EPSILON:
-            action = np.random.randint(4)
+            p_actions, _ = game.get_possible_actions()
+            action = p_actions[np.random.randint(3)]
             EPSILON = max(EPSILON * EPSILON_DECAY, MIN_EPSILON)
         else:
-            action = np.argmax(main_nn.predict(np.expand_dims(state, axis=0)))
+            p_actions, imp = game.get_possible_actions()
+            action_values = main_nn.predict(np.expand_dims(state, axis=0))[0]
+            m = np.zeros(action_values.shape, dtype=bool)
+            m[imp] = True
+            action_values = np.ma.array(action_values, mask=m)
+            action = np.argmax(action_values)
         terminal, new_state, r = game.step(action=action)
         ep_reward += r
         REPLAY_BUFFER.append([state, action, new_state, r, terminal])
@@ -128,5 +146,5 @@ while game.run:
 
 print("Training done congrat!!!")
 # main_nn.save("main")
-main_nn.save("main.h5")
+main_nn.save(f"main{args.index}.h5")
 # target_nn.save("target")

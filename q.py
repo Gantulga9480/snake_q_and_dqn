@@ -7,7 +7,7 @@ parser.add_argument('-i', '--index', default='')
 args = parser.parse_args()
 
 
-LR = 0.7
+LR = 0.5
 GAMMA = 0.99
 EPSILON = 1
 EPSILON_MIN = 0.1

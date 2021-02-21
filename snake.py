@@ -60,9 +60,9 @@ class Snake:
         dis = self.get_dis()
         self.dis_diff = dis
         if dis <= self.dis_diff:
-            return FOOD_REWARD - dis
+            return -EMPTY_STEP_REWARD
         else:
-            return - (FOOD_REWARD - dis)
+            return EMPTY_STEP_REWARD
 
     def get_dis(self):
         diff_x = self.food_x - self.snake[0][0]
