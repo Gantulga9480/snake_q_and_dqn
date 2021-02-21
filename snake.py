@@ -60,9 +60,9 @@ class Snake:
         dis = self.get_dis()
         self.dis_diff = dis
         if dis <= self.dis_diff:
-            return -EMPTY_STEP_REWARD
+            return 1
         else:
-            return EMPTY_STEP_REWARD
+            return -1
 
     def get_dis(self):
         diff_x = self.food_x - self.snake[0][0]
@@ -85,10 +85,26 @@ class Snake:
         state = []
         x = self.snake[0][0]
         y = self.snake[0][1]
-        state.append(x)
-        state.append(y)
-        state.append(self.food_x)
-        state.append(self.food_y)
+        dis_x = self.food_x - x
+        dis_y = self.food_y - y
+        if dis_x < 0 and dis_y < 0:
+            state.append(0)
+        elif dis_x < 0 and dis_y == 0:
+            state.append(1)
+        elif dis_x < 0 and dis_y > 0:
+            state.append(2)
+        elif dis_x == 0 and dis_y > 0:
+            state.append(3)
+        elif dis_x > 0 and dis_y > 0:
+            state.append(4)
+        elif dis_x > 0 and dis_y == 0:
+            state.append(5)
+        elif dis_x > 0 and dis_y < 0:
+            state.append(6)
+        elif dis_x == 0 and dis_y < 0:
+            state.append(7)
+        elif dis_x == 0 and dis_y == 0:
+            quit()
         node = []
         if x - 1 >= 0:
             node.append(self.board[x-1][y])
@@ -112,6 +128,7 @@ class Snake:
             print(self.board)
             quit()
         return np.array(state, dtype=int)
+        # return state
 
     def get_action_dir(self, action):
         if action == 0:
